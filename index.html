@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Facturas">
+<title>Control de Facturas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1e293b;--mut:#64748b;--line:#e2e8f0;--brand:#4f46e5;--brand2:#7c3aed;--ok:#15803d;--okbg:#dcfce7;--pen:#a16207;--penbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}body{margin:0;overflow-x:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:linear-gradient(120deg,#4f46e5,#7c3aed 55%,#db2777);color:#fff;padding:18px 20px 14px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;max-width:1500px;margin:auto}
+h1{margin:0;font-size:22px;letter-spacing:.2px}
+h1 small{display:block;font-weight:400;font-size:12.5px;opacity:.85;margin-top:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+button,.btn{font:inherit;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:600;transition:.15s}
+.btn-w{background:rgba(255,255,255,.18);color:#fff}.btn-w:hover{background:rgba(255,255,255,.3)}
+.btn-p{background:var(--brand);color:#fff}.btn-p:hover{background:#4338ca}
+.btn-g{background:#eef2ff;color:var(--brand)}.btn-g:hover{background:#e0e7ff}
+.btn-d{background:var(--badbg);color:var(--bad)}
+main{max-width:1500px;margin:auto;padding:16px 20px 60px}
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:-26px 0 16px}
+.q{background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:0 4px 14px rgba(30,41,59,.1);text-align:left;border:2px solid transparent;display:block;width:100%}
+.q:hover{transform:translateY(-2px);border-color:var(--c)}
+.q .t{font-size:12px;color:var(--mut);font-weight:600;display:flex;gap:6px;align-items:center}
+.q .v{font-size:22px;font-weight:800;margin-top:4px;color:var(--c)}
+.q .s{font-size:12px;color:var(--mut);margin-top:2px}
+.tabs{display:flex;gap:6px;margin:6px 0 12px}
+.tab{background:transparent;color:var(--mut);padding:9px 18px;border-radius:10px 10px 0 0}
+.tab.on{background:var(--card);color:var(--brand);box-shadow:0 -2px 0 var(--brand) inset}
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 2px 10px rgba(30,41,59,.06);padding:14px 16px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px}
+.filters label{font-size:11px;color:var(--mut);font-weight:700;display:flex;flex-direction:column;gap:3px;text-transform:uppercase;letter-spacing:.4px}
+input,select,textarea{font:inherit;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);min-width:0}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px #e0e7ff}
+.wrap{overflow:auto;border-radius:10px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:#f1f5f9;text-align:left;padding:9px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none}
+td{padding:8px 10px;border-top:1px solid var(--line);white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f8fafc!important}
+tfoot td{font-weight:800;background:#f1f5f9;border-top:2px solid var(--line)}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-weight:700;font-size:12px}
+.st{border:0;cursor:pointer}
+.st.P{background:var(--penbg);color:var(--pen)}.st.G{background:var(--okbg);color:var(--ok)}
+.venc{color:var(--bad);font-weight:700}
+.act button{padding:4px 8px;font-size:12px;margin-left:3px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi{border-radius:var(--r);padding:14px;color:#fff}
+.kpi .l{font-size:12px;opacity:.9;font-weight:600}.kpi .n{font-size:22px;font-weight:800;margin-top:4px}
+h3{margin:2px 0 10px;font-size:15px}
+canvas{max-height:300px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto;z-index:50}
+.modal.on{display:flex}
+.box{background:#fff;border-radius:18px;width:min(1000px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.box.sm{width:min(720px,100%)}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.mh h2{margin:0;font-size:19px}
+.x{background:#f1f5f9;color:var(--mut);padding:6px 12px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:12px}
+.form label{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;display:flex;flex-direction:column;gap:4px}
+.form .sec{grid-column:1/-1;font-weight:800;color:var(--brand);border-bottom:2px solid #eef2ff;padding-bottom:4px;margin-top:6px;font-size:13px}
+.ro{background:#f1f5f9;font-weight:700}
+.hint{font-size:12px;color:var(--mut)}
+.groupH{padding:7px 10px;font-weight:800;color:#fff;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;margin-top:14px}
+.seg{display:inline-flex;background:#eef2ff;border-radius:10px;padding:3px;gap:2px}
+.seg button{background:transparent;color:var(--brand);padding:5px 12px}.seg button.on{background:var(--brand);color:#fff}
+.lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.lists .card{box-shadow:none;border:1px solid var(--line)}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 6px 3px 11px;margin:3px;font-size:12.5px;font-weight:600;background:#eef2ff}
+.tag b{cursor:pointer;background:rgba(0,0,0,.1);border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px}
+.row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.empty{padding:28px;text-align:center;color:var(--mut)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 18px;border-radius:99px;display:none;z-index:99}
+@media(max-width:700px){main{padding:12px}.quick{margin-top:-20px}}
+
+.fbtn{display:none;width:100%;margin-bottom:10px}
+#sum{display:none;font-size:12.5px;color:var(--mut);margin:0 0 6px;font-weight:600}
+input[type=date]{min-height:38px}
+button{touch-action:manipulation}
+.period{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 12px}
+.period .seg{flex-wrap:wrap}.period select,.period input{padding:6px 8px}
+.period .info{font-size:12.5px;color:var(--mut);flex:1 1 260px}
+.arrchip{background:#facc15;color:#713f12;border-radius:99px;padding:2px 9px;font-weight:700;font-size:11.5px;display:inline-block}
+tbody tr.arr:hover td{background:#fde047!important}
+@media(max-width:760px){
+ body{font-size:15px}
+ header{padding:calc(12px + env(safe-area-inset-top)) 14px 34px}
+ h1{font-size:19px}
+ .tools{width:100%}.tools button{flex:1 1 30%;padding:9px 6px;font-size:13px}
+ main{padding:10px 12px calc(50px + env(safe-area-inset-bottom))}
+ .quick{grid-template-columns:1fr 1fr;gap:9px;margin-top:-26px}
+ .q{padding:11px 12px}.q .v{font-size:18px}.q .s{font-size:11px}
+ .tab{flex:1;padding:11px 6px}
+ .fbtn{display:block}
+ #filters{display:none;grid-template-columns:1fr 1fr;gap:10px}
+ #filters.open{display:grid}
+ #filters label:first-child,#filters>button{grid-column:1/-1}
+ #filters input,#filters select{width:100%!important}
+ input,select,textarea{font-size:16px;padding:10px}
+ .card{padding:12px}
+ #sum{display:block}
+ .wrap{border:0;overflow:visible}
+ #tbl thead,#tbl tfoot{display:none}
+ #tbl,#tbl tbody,#tbl tr,#tbl td{display:block;width:100%}
+ #tbl tr{border:1px solid var(--line);border-top:7px solid var(--cc,#94a3b8);border-radius:12px;margin:0 0 12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+ #tbl td{display:flex;justify-content:space-between;align-items:center;gap:12px;white-space:normal;text-align:right;padding:7px 12px;border-top:1px solid #eef2f7;border-left:0!important}
+ #tbl td:first-child{display:none}
+ #tbl td::before{content:attr(data-l);font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;text-align:left;flex:none}
+ #tbl td:empty{display:none}
+ #tbl td.act{justify-content:flex-end;gap:8px}.act button{padding:9px 16px;font-size:15px}
+ #tbl td.act::before{display:none}
+ .st{padding:6px 14px;font-size:13px}
+ .modal{padding:0;align-items:stretch}
+ .box,.box.sm{width:100%;min-height:100%;border-radius:0;padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
+ .mh{position:sticky;top:0;background:#fff;z-index:2;padding:4px 0 8px}
+ .mh h2{font-size:17px}
+ .kpis{grid-template-columns:1fr 1fr;gap:9px}.kpi{padding:11px}.kpi .n{font-size:17px}
+ .form{grid-template-columns:1fr 1fr}.form .sec,.form label[style]{grid-column:1/-1}
+ .row .btn-p,.row .btn-g{padding:10px 14px}
+ .wrap table{font-size:12.5px}
+ .wrap{overflow:auto;border:1px solid var(--line)}
+ #tbl-wrap .wrap{overflow:visible;border:0}
+ canvas{max-height:260px}
+}
+@media(max-width:420px){.form{grid-template-columns:1fr}.tools button{flex-basis:30%;font-size:12px;padding:9px 2px}}
+</style>
+</head>
+<body>
+<header><div class="top">
+  <h1>🧾 Control de Facturas<small>Órdenes de compra · Facturación · Seguimiento de pagos</small></h1>
+  <div class="tools">
+    <button class="btn-w" onclick="openForm()">➕ Nuevo registro</button>
+    <button class="btn-w" onclick="openLists()">⚙️ Listas</button>
+    <button class="btn-w" onclick="exportXlsx()">📊 Excel</button>
+    <button class="btn-w" onclick="exportJson()">💾 Respaldo</button>
+    <button class="btn-w" onclick="document.getElementById('imp').click()">📂 Restaurar</button>
+    <input id="imp" type="file" accept=".json" hidden onchange="importJson(this)">
+  </div></div></header>
+<main>
+  <div class="quick" id="quick"></div>
+  <div class="period" id="period"></div>
+  <div class="tabs"><button class="tab on" data-t="reg" onclick="tab('reg')">📋 Registros</button><button class="tab" data-t="dash" onclick="tab('dash')">📈 Dashboard</button></div>
+  <button class="btn-g fbtn" onclick="this.nextElementSibling.classList.toggle('open')">🔎 Filtros y búsqueda</button>
+  <div class="card filters" id="filters"></div>
+  <div id="sum"></div>
+  <section id="v-reg" class="card"><div class="wrap" id="tbl-wrap"><table id="tbl"></table></div></section>
+  <section id="v-dash" style="display:none"></section>
+  <p class="hint">💡 Los datos se guardan en este navegador. Usa <b>💾 Respaldo</b> de vez en cuando para guardar una copia, y <b>📂 Restaurar</b> para recuperarla en otro equipo.</p>
+</main>
+<div class="modal" id="modal"><div class="box" id="box"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='ctrlFacturas.v1', IVA=0.19;
+const PAL=['#3b82f6','#8b5cf6','#f97316','#ec4899','#14b8a6','#eab308','#06b6d4','#ef4444'];
+const SEED=[
+{resp:'Hugo Franzani',ciclo:'21/09/26 - 20/10/26',cliente:'App_Empresa',empresa:'Agrimaq',rut:'77.205.424-6',neto:1373600,oc:'4500223414',ocm:1373600,fac:'650',fn:1373600,pago:'2026-11-19',estado:'Pendiente'},
+{resp:'Rodrigo Gajardo',ciclo:'21/09/26 - 20/10/26',cliente:'App_Empresa',empresa:'Ancali',rut:'79.757.460-0',neto:707169,oc:'4500224464',ocm:707169,fac:'656',fn:707169,pago:'2026-11-18',estado:'Pendiente'},
+{resp:'Aladino Pérez',ciclo:'21/09/26 - 20/10/26',cliente:'App_Empresa',empresa:'',rut:'',neto:418600,estado:'Pendiente'},
+{resp:'Rafael Alvarez',ciclo:'21/09/26 - 20/10/26',cliente:'App_Empresa',empresa:'',rut:'',neto:21500,estado:'Pendiente'},
+{resp:'Rocío Lillo',ciclo:'21/09/26 - 20/10/26',cliente:'App_Empresa',empresa:'',rut:'',neto:381500,estado:'Pendiente'},
+{resp:'Ricardo Cuevas',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Sotraser',rut:'78.057.000-8',neto:3022900,oc:'4600083042',ocm:3022900,fac:'646',fn:3022900,pago:'2026-11-11',estado:'Pagada'},
+{resp:'Ricardo Cuevas',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'SCP Sotraser',rut:'76.110.212-5',neto:202100,oc:'4600083041',ocm:202100,fac:'647',fn:202100,pago:'2026-11-11',estado:'Pagada'},
+{resp:'Ricardo Cuevas',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Maper Ltda.',rut:'77.472.910-0',neto:81700,oc:'4600083040',ocm:81700,fac:'648',fn:81700,pago:'2026-11-11',estado:'Pagada'},
+{resp:'Ricardo Cuevas',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Maper Ltda.',rut:'77.472.910-0',neto:1720000,oc:'4600083039',ocm:1720000,fac:'649',fn:1720000,pago:'2026-11-11',estado:'Pagada'},
+{resp:'Ricardo Cuevas',ciclo:'21/09/26 - 20/10/26',cliente:'Colaciones Sotraser',empresa:'Sotraser',rut:'78.057.000-8',neto:220900,oc:'4600082767',ocm:220900,fac:'645',fn:220900,pago:'2026-11-18',estado:'Pendiente'},
+{resp:'Victoria Alveal',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Ancali',rut:'79.757.460-0',neto:181806,oc:'4500224092',ocm:181806,fac:'651',fn:181806,pago:'2026-11-18',estado:'Pendiente'},
+{resp:'Victoria Alveal',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Ancali',rut:'79.757.460-0',neto:754523,oc:'4500224091',ocm:754523,fac:'652',fn:754523,pago:'2026-11-18',estado:'Pendiente'},
+{resp:'Victoria Alveal',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Ancali',rut:'79.757.460-0',neto:55900,oc:'4500224093',ocm:55900,fac:'653',fn:55900,pago:'2026-11-18',estado:'Pendiente'},
+{resp:'Victoria Alveal',ciclo:'21/08/26 - 20/09/26',cliente:'Casino',empresa:'Agrimaq',rut:'77.205.424-6',neto:851400,oc:'4500222356',ocm:851400,fac:'655',fn:851400,pago:'2026-11-19',estado:'Pendiente'},
+{resp:'Victoria Alveal',ciclo:'21/09/26 - 20/10/26',cliente:'Casino',empresa:'Agrimaq',rut:'77.205.424-6',neto:1001900,oc:'4500224095',ocm:1001900,fac:'654',fn:1001900,pago:'2026-11-19',estado:'Pendiente'}
+];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let S;
+function load(){
+  try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+  if(!S){
+    S={recs:SEED.map(r=>({id:uid(),obs:'',...r})),
+       lists:{ciclos:['21/08/26 - 20/09/26','21/09/26 - 20/10/26','21/10/26 - 20/11/26'],
+       clientes:[{n:'App_Empresa',c:PAL[0]},{n:'App_Sindicato',c:PAL[1]},{n:'Casino',c:PAL[2]},{n:'Colaciones Sotraser',c:PAL[3]}],
+       resp:['Hugo Franzani','Rodrigo Gajardo','Aladino Pérez','Rafael Alvarez','Rocío Lillo','Ricardo Cuevas','Victoria Alveal'],
+       empresas:[{n:'Sotraser',rut:'78.057.000-8'},{n:'Agrimaq',rut:'77.205.424-6'},{n:'Ancali',rut:'79.757.460-0'},{n:'SCP Sotraser',rut:'76.110.212-5'},{n:'Maper Ltda.',rut:'77.472.910-0'},{n:'Sotraser Transporte',rut:''},{n:'Sotraser Logística',rut:''},{n:'Ancali Transporte',rut:''}]}};
+    save();
+  }
+}
+function genCiclos(){const out=[];const f=(y,m,d)=>String(d).padStart(2,'0')+'/'+String(m).padStart(2,'0')+'/'+String(y).slice(2);
+  for(let y=2026,m=8;!(y==2028&&m==1);){const ny=m==12?y+1:y,nm=m==12?1:m+1;out.push(f(y,m,21)+' - '+f(ny,nm,20));y=ny;m=nm}return out}
+const cStart=c=>{const[d,m,y]=c.split(' - ')[0].split('/');return '20'+y+m+d};
+function syncCiclos(){const L=S.lists;const set=new Set(L.ciclos);let ch=false;genCiclos().forEach(c=>{if(!set.has(c)){L.ciclos.push(c);ch=true}});
+  L.ciclos.sort((x,y)=>cStart(x).localeCompare(cStart(y)));if(ch)save()}
+function cicloActual(){const t=todayISO().replace(/-/g,'');const L=S.lists.ciclos;let r=null;L.forEach(c=>{const e=cB(c)[1];if(e&&e<t)r=c});return r||L[0]} // ciclo en curso = último ciclo cerrado (el que se está facturando)
+const cB=c=>{const m=/^(\d\d)\/(\d\d)\/(\d\d) - (\d\d)\/(\d\d)\/(\d\d)$/.exec(c||'');return m?['20'+m[3]+m[2]+m[1],'20'+m[6]+m[5]+m[4]]:['','']};
+let P={mode:'todos',cyc:'',d1:'',d2:''};
+function isArr(r){if(r.estado==='Pagada')return false;const e=cB(r.ciclo)[1],a=cB(cicloActual())[0];return !!e&&e<a}
+function scoped(){
+  const L=S.lists.ciclos,cur=cicloActual(),i=L.indexOf(cur);
+  if(P.mode=='todos')return S.recs;
+  if(P.mode=='actual')return S.recs.filter(r=>r.ciclo===cur||isArr(r));
+  if(P.mode=='anterior'){const c=L[i-1];return S.recs.filter(r=>r.ciclo===c)}
+  if(P.mode=='otro')return S.recs.filter(r=>r.ciclo===P.cyc);
+  const d1=P.d1.replace(/-/g,''),d2=P.d2.replace(/-/g,'');
+  return S.recs.filter(r=>{const[a,b]=cB(r.ciclo);return !a||((!d1||b>=d1)&&(!d2||a<=d2))});
+}
+function setPeriod(m,v){P.mode=m;if(m=='otro')P.cyc=v||S.lists.ciclos[0];renderAll()}
+function renderPeriod(){
+  const L=S.lists.ciclos,cur=cicloActual(),ant=L[L.indexOf(cur)-1]||'';
+  const arr=S.recs.filter(isArr),aT=arr.reduce((a,r)=>a+(r.fn||r.neto||0),0);
+  const lab={todos:'<b>Todos los registros</b>',actual:'Ciclo en curso <b>'+esc(cur)+'</b> + arrastre',anterior:'Ciclo anterior <b>'+esc(ant)+'</b>',otro:'Ciclo <b>'+esc(P.cyc)+'</b>',rango:'Ciclos entre <b>'+(P.d1?fd(P.d1):'…')+'</b> y <b>'+(P.d2?fd(P.d2):'…')+'</b>'}[P.mode];
+  const B=(m,t)=>`<button class="${P.mode==m?'on':''}" onclick="setPeriod('${m}')">${t}</button>`;
+  $('period').innerHTML=`<div class="seg">${B('todos','📋 Todos')}${B('actual','📍 Ciclo en curso')}${B('anterior','◀ Ciclo anterior')}${B('rango','📆 Rango de fechas')}</div>
+  <select onchange="if(this.value)setPeriod('otro',this.value)"><option value="">Otro ciclo…</option>${L.map(c=>`<option ${P.mode=='otro'&&P.cyc==c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+  ${P.mode=='rango'?`<label class="hint">Desde <input type="date" value="${P.d1}" onchange="P.d1=this.value;renderAll()"></label><label class="hint">Hasta <input type="date" value="${P.d2}" onchange="P.d2=this.value;renderAll()"></label>`:''}
+  <div class="info">Mostrando: ${lab}<br><span class="arrchip">🟨 Arrastre</span> ${arr.length} registro(s) pendiente(s) de ciclos anteriores a ${esc(cur)} · neto ${clp(aT)}</div>`;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('⚠️ No se pudo guardar en este navegador')}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clp=n=>'$'+Math.round(n||0).toLocaleString('es-CL');
+const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
+const ivaOf=r=>r.fn!=null?Math.round(r.fn*IVA):0;
+const totOf=r=>r.fn!=null?r.fn:0; // todos los totales se muestran en valor NETO (sin IVA)
+const fd=iso=>iso?iso.split('-').reverse().join('/'):'—';
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const colorOf=n=>(S.lists.clientes.find(c=>c.n===n)||{c:'#94a3b8'}).c;
+const tint=(c,a='22')=>c+a;
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600)}
+const hasFac=r=>r.fac!=null&&r.fac!=='';
+const porCobrar=r=>hasFac(r)&&r.estado!=='Pagada';
+
+/* ---------- filtros ---------- */
+let F={q:'',cliente:'',empresa:'',resp:'',ciclo:'',estado:'',d1:'',d2:'',fac:''};
+let sortK='id',sortD=1;
+const opts=(arr,sel,all='Todos')=>`<option value="">${all}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
+function renderFilters(){
+  const L=S.lists;
+  $('filters').innerHTML=`
+  <label>Buscar<input id="f_q" placeholder="Factura, O/C, RUT…" value="${esc(F.q)}" style="width:170px"></label>
+  <label>Cliente<select id="f_cliente">${opts(L.clientes.map(c=>c.n),F.cliente)}</select></label>
+  <label>Empresa<select id="f_empresa">${opts(L.empresas.map(c=>c.n),F.empresa)}</select></label>
+  <label>Responsable<select id="f_resp">${opts(L.resp,F.resp)}</select></label>
+  <label>Ciclo<select id="f_ciclo">${opts(L.ciclos,F.ciclo)}</select></label>
+  <label>Estado<select id="f_estado">${opts(['Pendiente','Pagada'],F.estado)}</select></label>
+  <label>Factura<select id="f_fac"><option value="">Todas</option><option value="con" ${F.fac=='con'?'selected':''}>Con factura</option><option value="sin" ${F.fac=='sin'?'selected':''}>Sin factura</option><option value="sinoc" ${F.fac=='sinoc'?'selected':''}>Sin O/C</option></select></label>
+  <label>Pago desde<input type="date" id="f_d1" value="${F.d1}"></label>
+  <label>Pago hasta<input type="date" id="f_d2" value="${F.d2}"></label>
+  <button class="btn-g" onclick="clearF()">✖ Limpiar</button>`;
+  ['q','cliente','empresa','resp','ciclo','estado','d1','d2','fac'].forEach(k=>{
+    const el=$('f_'+k);el.addEventListener(k=='q'?'input':'change',()=>{F[k]=el.value;renderBody(k=='q')})});
+}
+function clearF(){F={q:'',cliente:'',empresa:'',resp:'',ciclo:'',estado:'',d1:'',d2:'',fac:''};renderFilters();renderBody()}
+function filtered(){
+  const q=F.q.toLowerCase();
+  return scoped().filter(r=>
+    (!F.cliente||r.cliente===F.cliente)&&(!F.empresa||r.empresa===F.empresa)&&(!F.resp||r.resp===F.resp)&&
+    (!F.ciclo||r.ciclo===F.ciclo)&&(!F.estado||r.estado===F.estado)&&
+    (!F.d1||(r.pago&&r.pago>=F.d1))&&(!F.d2||(r.pago&&r.pago<=F.d2))&&
+    (!F.fac||(F.fac=='con'?hasFac(r):F.fac=='sin'?!hasFac(r):!r.oc))&&
+    (!q||[r.fac,r.oc,r.rut,r.empresa,r.resp,r.obs].join(' ').toLowerCase().includes(q)));
+}
+
+/* ---------- tabla ---------- */
+const COLS=[['id','#'],['resp','Responsable'],['ciclo','Ciclo'],['cliente','Cliente'],['empresa','Empresa'],['rut','RUT'],['neto','$ Neto pedido','n'],['oc','N° O/C'],['ocm','$ O/C','n'],['fac','N° Factura'],['fn','$ Neto fact.','n'],['iva','IVA 19%','n'],['pago','Fecha pago'],['estado','Estado'],['x','']];
+function renderTable(){
+  let rows=filtered();
+  const val=r=>sortK=='id'?S.recs.indexOf(r):sortK=='iva'?ivaOf(r):sortK=='tot'?totOf(r):(r[sortK]??'');
+  rows.sort((a,b)=>{const x=val(a),y=val(b);return (typeof x=='number'&&typeof y=='number'?x-y:String(x).localeCompare(String(y),'es',{numeric:true}))*sortD});
+  const t=todayISO();
+  const head='<thead><tr>'+COLS.map(([k,l,c])=>`<th class="${c||''}" ${k!='x'?`onclick="sortBy('${k}')"`:''}>${l}${sortK==k?(sortD>0?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead>';
+  let s={neto:0,ocm:0,fn:0,iva:0,tot:0};
+  const body=rows.map(r=>{
+    const c=colorOf(r.cliente);s.neto+=r.neto||0;s.ocm+=r.ocm||0;s.fn+=r.fn||0;s.iva+=ivaOf(r);s.tot+=totOf(r);
+    const venc=r.estado!=='Pagada'&&r.pago&&r.pago<t;
+    const arr=isArr(r),bgc=arr?'#fef08a':tint(c,'0f');const bg=`style="background:${bgc}"`;
+    return `<tr class="${arr?'arr':''}" style="--cc:${c}"><td style="border-left:6px solid ${c};background:${bgc}">${S.recs.indexOf(r)+1}</td>
+    <td ${bg}>${esc(r.resp)}</td><td ${bg}>${esc(r.ciclo)}${arr?' <span class="arrchip">⏪ Arrastre</span>':''}</td>
+    <td ${bg}><span class="chip" style="background:${tint(c,'33')};color:${c};filter:brightness(.75)">${esc(r.cliente)}</span></td>
+    <td ${bg}>${esc(r.empresa)||'—'}</td><td ${bg}>${esc(r.rut)||'—'}</td>
+    <td class="n" ${bg}>${r.neto!=null?clp(r.neto):'—'}</td><td ${bg}>${esc(r.oc)||'<span class="hint">sin O/C</span>'}</td><td class="n" ${bg}>${r.ocm!=null?clp(r.ocm):'—'}</td>
+    <td ${bg}><b>${esc(r.fac)||'—'}</b></td><td class="n" ${bg}>${r.fn!=null?clp(r.fn):'—'}</td><td class="n" ${bg}>${r.fn!=null?clp(ivaOf(r)):'—'}</td>
+    <td ${bg} class="${venc?'venc':''}">${fd(r.pago)}${venc?' ⚠':''}</td>
+    <td ${bg}><button class="chip st ${r.estado=='Pagada'?'G':'P'}" title="Clic para cambiar" onclick="toggleEstado('${r.id}')">${r.estado=='Pagada'?'✔ Pagada':'● Pendiente'}</button></td>
+    <td class="act" ${bg}><button class="btn-g" onclick="openForm('${r.id}')">✏️</button><button class="btn-d" onclick="delRec('${r.id}')">🗑</button></td></tr>`}).join('');
+  $('sum').innerHTML=rows.length+' registro(s) · Total neto fact. <b>'+clp(s.fn)+'</b> · IVA <b>'+clp(s.iva)+'</b>';
+  $('tbl').innerHTML=head+`<tbody>${body||`<tr><td colspan="16" class="empty">Sin registros con los filtros actuales</td></tr>`}</tbody>
+  <tfoot><tr><td colspan="6">${rows.length} registro(s)</td><td class="n">${clp(s.neto)}</td><td></td><td class="n">${clp(s.ocm)}</td><td></td><td class="n">${clp(s.fn)}</td><td class="n">${clp(s.iva)}</td><td colspan="3"></td></tr></tfoot>`;
+  labelCells();
+}
+function labelCells(){document.querySelectorAll('#tbl tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{if(COLS[i])td.dataset.l=COLS[i][1]}))}
+function sortBy(k){if(sortK==k)sortD*=-1;else{sortK=k;sortD=1}renderTable()}
+function toggleEstado(id){const r=S.recs.find(x=>x.id===id);
+  if(r.estado=='Pagada')r.estado='Pendiente';else{r.estado='Pagada';if(!r.pago)r.pago=todayISO()}
+  save();renderAll()}
+function delRec(id){if(confirm('¿Eliminar este registro?')){S.recs=S.recs.filter(r=>r.id!==id);save();renderAll()}}
+
+/* ---------- accesos rápidos ---------- */
+function weekRange(off=0){const d=new Date();const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+off*7);const a=new Date(d);const b=new Date(d);b.setDate(b.getDate()+6);
+  const f=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');return[f(a),f(b)]}
+function renderQuick(){
+  const SC=scoped(),pc=SC.filter(porCobrar),pcT=pc.reduce((a,r)=>a+totOf(r),0);
+  const ocS=SC.filter(r=>!r.oc),ocF=SC.filter(r=>r.oc&&!hasFac(r));
+  const [w1,w2]=weekRange(0),sem=S.recs.filter(r=>r.pago&&r.pago>=w1&&r.pago<=w2&&hasFac(r));
+  const iva=SC.reduce((a,r)=>a+ivaOf(r),0),arrPC=pc.filter(isArr).reduce((a,r)=>a+totOf(r),0);
+  const Q=(c,ic,t,v,s,fn)=>`<button class="q" style="--c:${c}" onclick="${fn}"><div class="t">${ic} ${t}</div><div class="v">${v}</div><div class="s">${s}</div></button>`;
+  $('quick').innerHTML=
+   Q('#dc2626','💰','$ POR COBRAR',clp(pcT),pc.length+' factura(s)'+(arrPC?' · arrastre '+clp(arrPC):''),"panel('cobrar')")+
+   Q('#ea580c','📑','O/C PENDIENTES',ocS.length+ocF.length,ocS.length+' sin O/C · '+ocF.length+' sin facturar',"panel('oc')")+
+   Q('#0891b2','📅','PAGOS ESTA SEMANA',clp(sem.reduce((a,r)=>a+totOf(r),0)),sem.length+' factura(s) · '+fd(w1)+' al '+fd(w2),"panel('semana')")+
+   Q('#7c3aed','🧮','IVA ACUMULADO',clp(iva),'19% del neto facturado',"panel('iva')");
+}
+let weekOff=0,ivaF='todas';
+function mOpen(h,sm){$('box').className='box'+(sm?' sm':'');$('box').innerHTML=h;$('modal').classList.add('on')}
+function mClose(){$('modal').classList.remove('on')}
+$('modal').addEventListener('mousedown',e=>{if(e.target.id=='modal')mClose()});
+const mh=t=>`<div class="mh"><h2>${t}</h2><button class="x" onclick="mClose()">✖ Cerrar</button></div>`;
+function groupTables(rows,cols,rowFn,totFn){
+  const byC={};rows.forEach(r=>(byC[r.cliente]=byC[r.cliente]||[]).push(r));
+  let h='';
+  Object.keys(byC).forEach(k=>{const c=colorOf(k);const rs=byC[k];
+    h+=`<div class="groupH" style="background:${c}"><span>${esc(k)}</span><span>${totFn(rs)}</span></div>
+    <div class="wrap" style="border-radius:0 0 10px 10px"><table><thead><tr>${cols.map(x=>`<th class="${x[1]||''}">${x[0]}</th>`).join('')}</tr></thead><tbody>${rs.map(rowFn).join('')}</tbody></table></div>`});
+  return h||'<div class="empty">Sin información 🎉</div>';
+}
+function panel(kind){
+  const t=todayISO();
+  if(kind=='cobrar'){
+    const rows=scoped().filter(porCobrar).sort((a,b)=>(a.pago||'9').localeCompare(b.pago||'9'));
+    const tot=rows.reduce((a,r)=>a+totOf(r),0),venc=rows.filter(r=>r.pago&&r.pago<t).reduce((a,r)=>a+totOf(r),0);
+    mOpen(mh('💰 $ por cobrar')+`<div class="kpis"><div class="kpi" style="background:#dc2626"><div class="l">TOTAL POR COBRAR (NETO)</div><div class="n">${clp(tot)}</div></div><div class="kpi" style="background:#b91c1c"><div class="l">VENCIDO</div><div class="n">${clp(venc)}</div></div><div class="kpi" style="background:#475569"><div class="l">N° FACTURAS</div><div class="n">${rows.length}</div></div></div>`+
+    groupTables(rows,[['Empresa'],['N° Fact.'],['N° O/C'],['Ciclo'],['Responsable'],['Fecha pago'],['Neto','n'],['IVA','n']],
+      r=>`<tr ${isArr(r)?'style="background:#fef08a"':''}><td>${esc(r.empresa)}</td><td><b>${esc(r.fac)}</b></td><td>${esc(r.oc)||'—'}</td><td>${esc(r.ciclo)}${isArr(r)?' <span class="arrchip">⏪ Arrastre</span>':''}</td><td>${esc(r.resp)}</td><td class="${r.pago&&r.pago<t?'venc':''}">${fd(r.pago)}${r.pago&&r.pago<t?' ⚠ vencida':''}</td><td class="n">${clp(r.fn)}</td><td class="n">${clp(ivaOf(r))}</td></tr>`,
+      rs=>clp(rs.reduce((a,r)=>a+totOf(r),0))));
+  }
+  if(kind=='oc'){
+    const SC=scoped(),a=SC.filter(r=>!r.oc),b=SC.filter(r=>r.oc&&!hasFac(r));
+    mOpen(mh('📑 Órdenes de compra pendientes')+`<h3>A) Sin N° de O/C <span class="chip" style="background:#ffedd5;color:#c2410c">${a.length}</span></h3><p class="hint">Pedidos con monto, pero aún sin orden de compra del cliente.</p>`+
+    groupTables(a,[['Empresa'],['Ciclo'],['Responsable'],['$ Neto pedido','n']],r=>`<tr><td>${esc(r.empresa)||'—'}</td><td>${esc(r.ciclo)}</td><td>${esc(r.resp)}</td><td class="n">${clp(r.neto)}</td></tr>`,rs=>clp(rs.reduce((x,r)=>x+(r.neto||0),0)))+
+    `<h3 style="margin-top:20px">B) O/C recibida, factura sin emitir <span class="chip" style="background:#ffedd5;color:#c2410c">${b.length}</span></h3>`+
+    groupTables(b,[['Empresa'],['N° O/C'],['Ciclo'],['Responsable'],['$ O/C','n']],r=>`<tr><td>${esc(r.empresa)}</td><td><b>${esc(r.oc)}</b></td><td>${esc(r.ciclo)}</td><td>${esc(r.resp)}</td><td class="n">${clp(r.ocm)}</td></tr>`,rs=>clp(rs.reduce((x,r)=>x+(r.ocm||0),0))));
+  }
+  if(kind=='semana'){
+    const [w1,w2]=weekRange(weekOff);
+    const rows=S.recs.filter(r=>r.pago&&r.pago>=w1&&r.pago<=w2&&hasFac(r)).sort((a,b)=>a.pago.localeCompare(b.pago));
+    const tot=rows.reduce((a,r)=>a+totOf(r),0),pg=rows.filter(r=>r.estado=='Pagada').reduce((a,r)=>a+totOf(r),0);
+    mOpen(mh('📅 Pagos de la semana')+`<div class="mh"><div class="seg"><button onclick="weekOff--;panel('semana')">◀ Anterior</button><button class="${weekOff==0?'on':''}" onclick="weekOff=0;panel('semana')">Esta semana</button><button onclick="weekOff++;panel('semana')">Siguiente ▶</button></div><b>${fd(w1)} al ${fd(w2)}</b></div>
+    <div class="kpis"><div class="kpi" style="background:#0891b2"><div class="l">TOTAL NETO A PAGAR EN LA SEMANA</div><div class="n">${clp(tot)}</div></div><div class="kpi" style="background:#16a34a"><div class="l">YA PAGADO</div><div class="n">${clp(pg)}</div></div><div class="kpi" style="background:#ca8a04"><div class="l">PENDIENTE</div><div class="n">${clp(tot-pg)}</div></div></div>`+
+    groupTables(rows,[['Fecha pago'],['Empresa'],['N° Fact.'],['Neto','n'],['IVA','n'],['Estado']],
+      r=>`<tr><td>${fd(r.pago)}</td><td>${esc(r.empresa)}</td><td><b>${esc(r.fac)}</b></td><td class="n">${clp(r.fn)}</td><td class="n">${clp(ivaOf(r))}</td><td><span class="chip ${r.estado=='Pagada'?'st G':'st P'}">${r.estado}</span></td></tr>`,
+      rs=>clp(rs.reduce((a,r)=>a+totOf(r),0))));
+  }
+  if(kind=='iva'){
+    const rows=scoped().filter(r=>hasFac(r)&&(ivaF=='todas'||(ivaF=='pagadas'?r.estado=='Pagada':r.estado!='Pagada')));
+    const tot=rows.reduce((a,r)=>a+ivaOf(r),0);
+    const grp=(key)=>{const m={};rows.forEach(r=>{const k=key(r);m[k]=m[k]||{n:0,neto:0,iva:0};m[k].n++;m[k].neto+=r.fn;m[k].iva+=ivaOf(r)});return m};
+    const tb=(m,color)=>`<div class="wrap"><table><thead><tr><th>Detalle</th><th class="n">N° fact.</th><th class="n">Neto</th><th class="n">IVA</th></tr></thead><tbody>${Object.keys(m).sort().map(k=>`<tr><td>${color?`<span class="chip" style="background:${tint(colorOf(k),'33')};color:${colorOf(k)};filter:brightness(.75)">${esc(k)}</span>`:esc(k)}</td><td class="n">${m[k].n}</td><td class="n">${clp(m[k].neto)}</td><td class="n"><b>${clp(m[k].iva)}</b></td></tr>`).join('')}</tbody></table></div>`;
+    mOpen(mh('🧮 IVA acumulado')+`<div class="mh"><div class="seg">${['todas','pagadas','pendientes'].map(x=>`<button class="${ivaF==x?'on':''}" onclick="ivaF='${x}';panel('iva')">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>
+    <div class="kpis"><div class="kpi" style="background:#7c3aed"><div class="l">IVA ACUMULADO (${ivaF})</div><div class="n">${clp(tot)}</div></div><div class="kpi" style="background:#475569"><div class="l">NETO FACTURADO</div><div class="n">${clp(rows.reduce((a,r)=>a+r.fn,0))}</div></div><div class="kpi" style="background:#0f766e"><div class="l">FACTURAS</div><div class="n">${rows.length}</div></div></div>
+    <div class="grid2"><div><h3>Por ciclo de facturación</h3>${tb(grp(r=>r.ciclo))}</div><div><h3>Por cliente</h3>${tb(grp(r=>r.cliente),true)}</div></div>
+    <h3 style="margin-top:14px">Por empresa</h3>${tb(grp(r=>r.empresa||'(sin empresa)'))}`);
+  }
+}
+
+/* ---------- formulario ---------- */
+let editId=null;
+function sel(id,arr,val,ph){const a=val&&!arr.includes(val)?[...arr,val]:arr;return `<select id="${id}"><option value="">${ph}</option>${a.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select>`}
+function openForm(id){
+  editId=id||null;const L=S.lists;
+  const r=id?{...S.recs.find(x=>x.id===id)}:{resp:'',ciclo:cicloActual()||'',cliente:'',empresa:'',rut:'',neto:null,oc:'',ocm:null,fac:'',fn:null,pago:'',estado:'Pendiente',obs:''};
+  const ruts=[...new Set(L.empresas.map(e=>e.rut).filter(Boolean))];
+  mOpen(mh(id?'✏️ Editar registro':'➕ Nuevo registro')+`<div class="form">
+   <div class="sec">1 · Datos del cliente</div>
+   <label>Ciclo de facturación${sel('g_ciclo',L.ciclos,r.ciclo,'Seleccionar…')}</label>
+   <label>Responsable${sel('g_resp',L.resp,r.resp,'Seleccionar…')}</label>
+   <label>Cliente${sel('g_cliente',L.clientes.map(c=>c.n),r.cliente,'Seleccionar…')}</label>
+   <label>Empresa${sel('g_empresa',L.empresas.map(c=>c.n),r.empresa,'Seleccionar…')}</label>
+   <label>RUT (se completa solo)${sel('g_rut',ruts,r.rut,'Seleccionar…')}</label>
+   <div class="sec">2 · Orden de compra</div>
+   <label>$ Neto del pedido<input type="number" min="0" id="g_neto" value="${r.neto??''}"></label>
+   <label>N° O/C<input id="g_oc" inputmode="numeric" value="${esc(r.oc)}" placeholder="Ej: 4500224095"></label>
+   <label>$ Monto O/C<input type="number" min="0" id="g_ocm" value="${r.ocm??''}"></label>
+   <div class="sec">3 · Factura y pago</div>
+   <label>N° Factura<input id="g_fac" inputmode="numeric" value="${esc(r.fac)}"></label>
+   <label>$ Neto factura<input type="number" min="0" id="g_fn" value="${r.fn??''}"></label>
+   <label>IVA 19% (automático)<input id="g_iva" class="ro" readonly></label>
+   <label>Fecha de pago<input type="date" id="g_pago" value="${r.pago||''}"></label>
+   <label>Estado${sel('g_estado',['Pendiente','Pagada'],r.estado,'')}</label>
+   <label style="grid-column:1/-1">Observaciones<textarea id="g_obs" rows="2">${esc(r.obs)}</textarea></label>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-top:16px"><span class="hint">Los montos, N° de O/C y N° de factura se ingresan manualmente.</span><span><button class="btn-g" onclick="mClose()">Cancelar</button> <button class="btn-p" onclick="saveForm()">💾 Guardar</button></span></div>`);
+  const calc=()=>{const v=num($('g_fn').value);$('g_iva').value=v==null?'':clp(Math.round(v*IVA))};
+  $('g_fn').addEventListener('input',calc);calc();
+  $('g_empresa').addEventListener('change',()=>{const e=L.empresas.find(x=>x.n===$('g_empresa').value);$('g_rut').value=e?e.rut:''});
+  $('g_rut').addEventListener('change',()=>{const e=L.empresas.find(x=>x.rut&&x.rut===$('g_rut').value);if(e)$('g_empresa').value=e.n});
+}
+function saveForm(){
+  const g=k=>$('g_'+k).value.trim();
+  const miss=[['ciclo','Ciclo'],['resp','Responsable'],['cliente','Cliente'],['empresa','Empresa']].filter(([k])=>!g(k)).map(x=>x[1]);
+  if(miss.length)return toast('Falta: '+miss.join(', '));
+  const rec={ciclo:g('ciclo'),resp:g('resp'),cliente:g('cliente'),empresa:g('empresa'),rut:g('rut'),neto:num(g('neto')),oc:g('oc'),ocm:num(g('ocm')),fac:g('fac'),fn:num(g('fn')),pago:g('pago'),estado:g('estado')||'Pendiente',obs:g('obs')};
+  if(rec.fac&&S.recs.some(r=>r.fac===rec.fac&&r.id!==editId)&&!confirm('El N° de factura '+rec.fac+' ya existe. ¿Guardar igual?'))return;
+  if(rec.estado=='Pagada'&&!rec.pago)rec.pago=todayISO();
+  if(editId)Object.assign(S.recs.find(r=>r.id===editId),rec);else S.recs.push({id:uid(),...rec});
+  save();mClose();renderAll();toast('✅ Guardado');
+}
+
+/* ---------- listas ---------- */
+function openLists(){
+  const L=S.lists;
+  const tags=(arr,k,fmt)=>arr.map((x,i)=>`<span class="tag" ${fmt&&fmt.s?`style="${fmt.s(x)}"`:''}>${fmt?fmt.t(x):esc(x)}<b onclick="delItem('${k}',${i})">×</b></span>`).join('');
+  mOpen(mh('⚙️ Listas desplegables')+`<p class="hint">Agrega o quita opciones de los menús. Los registros ya guardados no se modifican.</p><div class="lists">
+  <div class="card"><h3>Ciclos de facturación</h3>${tags(L.ciclos,'ciclos')}<div class="row"><input type="date" id="c1"><input type="date" id="c2"><button class="btn-p" onclick="addCiclo()">Agregar</button></div></div>
+  <div class="card"><h3>Clientes (con color)</h3>${tags(L.clientes,'clientes',{t:x=>esc(x.n),s:x=>`background:${tint(x.c,'33')};color:${x.c};filter:brightness(.75)`})}<div class="row"><input id="n_cli" placeholder="Nombre"><input type="color" id="n_col" value="${PAL[L.clientes.length%PAL.length]}" style="padding:2px;width:46px"><button class="btn-p" onclick="addCli()">Agregar</button></div></div>
+  <div class="card"><h3>Responsables</h3>${tags(L.resp,'resp')}<div class="row"><input id="n_resp" placeholder="Nombre"><button class="btn-p" onclick="addResp()">Agregar</button></div></div>
+  <div class="card"><h3>Empresas y RUT</h3>${tags(L.empresas,'empresas',{t:x=>esc(x.n)+(x.rut?` <small>(${esc(x.rut)})</small>`:'')})}<div class="row"><input id="n_emp" placeholder="Empresa"><input id="n_rut" placeholder="RUT 12.345.678-9"><button class="btn-p" onclick="addEmp()">Agregar</button></div></div>
+  </div>`);
+}
+function delItem(k,i){S.lists[k].splice(i,1);save();openLists();renderAll()}
+function addCiclo(){const a=$('c1').value,b=$('c2').value;if(!a||!b)return toast('Elige fecha inicio y término');const f=x=>{const[y,m,d]=x.split('-');return d+'/'+m+'/'+y.slice(2)};S.lists.ciclos.push(f(a)+' - '+f(b));save();openLists();renderAll()}
+function addCli(){const n=$('n_cli').value.trim();if(!n)return;S.lists.clientes.push({n,c:$('n_col').value});save();openLists();renderAll()}
+function addResp(){const n=$('n_resp').value.trim();if(!n)return;S.lists.resp.push(n);save();openLists();renderAll()}
+function addEmp(){const n=$('n_emp').value.trim();if(!n)return;S.lists.empresas.push({n,rut:$('n_rut').value.trim()});save();openLists();renderAll()}
+
+/* ---------- dashboard ---------- */
+let charts=[],dashMode='mes';
+function sum(rows,f){return rows.reduce((a,r)=>a+f(r),0)}
+function renderDash(){
+  const rows=filtered().filter(hasFac),all=filtered();
+  const fact=sum(rows,r=>r.fn),ivaT=sum(rows,ivaOf),tot=sum(rows,totOf),pag=sum(rows.filter(r=>r.estado=='Pagada'),totOf),cob=tot-pag;
+  const clientes=[...new Set(all.map(r=>r.cliente))];
+  const K=(c,l,n)=>`<div class="kpi" style="background:${c}"><div class="l">${l}</div><div class="n">${n}</div></div>`;
+  const byC=clientes.map(c=>{const x=rows.filter(r=>r.cliente===c);const t=sum(x,totOf),p=sum(x.filter(r=>r.estado=='Pagada'),totOf);return{c,n:x.length,neto:sum(x,r=>r.fn),iva:sum(x,ivaOf),t,p,cob:t-p,oc:all.filter(r=>r.cliente===c&&(!r.oc||!hasFac(r))).length}});
+  const dates={};rows.forEach(r=>{const k=r.pago||'Sin fecha';(dates[k]=dates[k]||[]).push(r)});
+  $('v-dash').innerHTML=`<div class="kpis">${K('linear-gradient(120deg,#4f46e5,#6366f1)','TOTAL NETO FACTURADO',clp(fact))}${K('linear-gradient(120deg,#7c3aed,#a855f7)','IVA 19% (informativo)',clp(ivaT))}${K('linear-gradient(120deg,#16a34a,#22c55e)','COBRADO',clp(pag))}${K('linear-gradient(120deg,#dc2626,#f87171)','POR COBRAR',clp(cob))}<div class="kpi" style="background:#facc15;color:#713f12"><div class="l">⏪ ARRASTRE (neto)</div><div class="n">${clp(sum(rows.filter(isArr),totOf))}</div></div>${K('linear-gradient(120deg,#ea580c,#fb923c)','% COBRADO',tot?Math.round(pag/tot*100)+'%':'—')}</div>
+  <p class="hint">El dashboard respeta los filtros de arriba.</p>
+  <div class="grid2" style="margin-bottom:14px"><div class="card"><h3>Neto facturado por cliente</h3><canvas id="ch1"></canvas></div><div class="card"><h3>Cobrado vs por cobrar por cliente</h3><canvas id="ch2"></canvas></div></div>
+  <div class="grid2" style="margin-bottom:14px"><div class="card"><div class="mh"><h3>Seguimiento por fecha de pago</h3><div class="seg"><button class="${dashMode=='dia'?'on':''}" onclick="dashMode='dia';renderDash()">Día</button><button class="${dashMode=='sem'?'on':''}" onclick="dashMode='sem';renderDash()">Semana</button><button class="${dashMode=='mes'?'on':''}" onclick="dashMode='mes';renderDash()">Mes</button></div></div><canvas id="ch3"></canvas></div><div class="card"><h3>Neto facturado por empresa</h3><canvas id="ch4"></canvas></div></div>
+  <div class="card" style="margin-bottom:14px"><h3>Resumen por cliente</h3><div class="wrap"><table><thead><tr><th>Cliente</th><th class="n">Facturas</th><th class="n">Neto</th><th class="n">IVA</th><th class="n">Cobrado</th><th class="n">Por cobrar</th><th>Avance</th><th class="n">O/C pend.</th></tr></thead><tbody>${byC.map(x=>{const c=colorOf(x.c),pc=x.t?Math.round(x.p/x.t*100):0;return`<tr style="background:${tint(c,'0f')}"><td style="border-left:6px solid ${c}"><b style="color:${c};filter:brightness(.75)">${esc(x.c)}</b></td><td class="n">${x.n}</td><td class="n">${clp(x.neto)}</td><td class="n">${clp(x.iva)}</td><td class="n">${clp(x.p)}</td><td class="n">${clp(x.cob)}</td><td style="min-width:130px"><div style="background:#e2e8f0;border-radius:9px;height:10px"><div style="width:${pc}%;background:${c};height:10px;border-radius:9px"></div></div><small>${pc}%</small></td><td class="n">${x.oc}</td></tr>`}).join('')}</tbody><tfoot><tr><td>Total</td><td class="n">${rows.length}</td><td class="n">${clp(fact)}</td><td class="n">${clp(ivaT)}</td><td class="n">${clp(pag)}</td><td class="n">${clp(cob)}</td><td></td><td class="n">${sum(byC,x=>x.oc)}</td></tr></tfoot></table></div></div>
+  <div class="card"><h3>Calendario de pagos</h3><div class="wrap"><table><thead><tr><th>Fecha</th><th>Facturas</th><th class="n">N°</th><th class="n">Neto</th><th>Estado</th></tr></thead><tbody>${Object.keys(dates).sort().map(d=>{const x=dates[d],pg=x.every(r=>r.estado=='Pagada');return`<tr><td><b>${d=='Sin fecha'?d:fd(d)}</b></td><td>${x.map(r=>`<span class="chip" style="background:${tint(colorOf(r.cliente),'33')};color:${colorOf(r.cliente)};filter:brightness(.75);margin:1px">N° ${esc(r.fac)} · ${esc(r.empresa)}</span>`).join('')}</td><td class="n">${x.length}</td><td class="n"><b>${clp(sum(x,totOf))}</b></td><td><span class="chip st ${pg?'G':'P'}">${pg?'✔ Pagada':'● Pendiente'}</span></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">Sin datos</td></tr>'}</tbody></table></div></div>`;
+  charts.forEach(c=>c.destroy());charts=[];
+  if(typeof Chart=='undefined'){return}
+  Chart.defaults.font.family='system-ui';
+  const mon=v=>'$'+Math.round(v/1000).toLocaleString('es-CL')+'k';
+  const opt={responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>' '+(c.dataset.label?c.dataset.label+': ':'')+clp(c.raw)}}}};
+  charts.push(new Chart($('ch1'),{type:'doughnut',data:{labels:byC.map(x=>x.c),datasets:[{data:byC.map(x=>x.t),backgroundColor:byC.map(x=>colorOf(x.c))}]},options:{...opt,plugins:{...opt.plugins,tooltip:{callbacks:{label:c=>' '+c.label+': '+clp(c.raw)}}}}}));
+  charts.push(new Chart($('ch2'),{type:'bar',data:{labels:byC.map(x=>x.c),datasets:[{label:'Cobrado',data:byC.map(x=>x.p),backgroundColor:'#22c55e'},{label:'Por cobrar',data:byC.map(x=>x.cob),backgroundColor:'#f87171'}]},options:{...opt,scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:mon}}}}}));
+  const keyOf=d=>{if(dashMode=='dia')return d;if(dashMode=='mes')return d.slice(0,7);const dt=new Date(d+'T00:00');const day=(dt.getDay()+6)%7;dt.setDate(dt.getDate()-day);return dt.toISOString().slice(0,10)};
+  const g={};rows.filter(r=>r.pago).forEach(r=>{const k=keyOf(r.pago);g[k]=g[k]||{p:0,c:0};r.estado=='Pagada'?g[k].p+=totOf(r):g[k].c+=totOf(r)});
+  const ks=Object.keys(g).sort();const lab=k=>dashMode=='mes'?k.split('-').reverse().join('/'):dashMode=='sem'?'Sem. '+fd(k).slice(0,5):fd(k);
+  charts.push(new Chart($('ch3'),{type:'bar',data:{labels:ks.map(lab),datasets:[{label:'Pagado',data:ks.map(k=>g[k].p),backgroundColor:'#22c55e'},{label:'Pendiente',data:ks.map(k=>g[k].c),backgroundColor:'#fbbf24'}]},options:{...opt,scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:mon}}}}}));
+  const em={};rows.forEach(r=>{const k=r.empresa||'(sin empresa)';em[k]=(em[k]||0)+totOf(r)});const ek=Object.keys(em).sort((a,b)=>em[b]-em[a]);
+  charts.push(new Chart($('ch4'),{type:'bar',data:{labels:ek,datasets:[{label:'Neto',data:ek.map(k=>em[k]),backgroundColor:'#6366f1',borderRadius:6}]},options:{...opt,indexAxis:'y',plugins:{...opt.plugins,legend:{display:false}},scales:{x:{ticks:{callback:mon}}}}}));
+}
+
+/* ---------- exportar / respaldo ---------- */
+function exportXlsx(){
+  if(typeof XLSX=='undefined')return toast('No se pudo cargar el exportador (revisa tu conexión)');
+  const rows=filtered().map((r,i)=>({'#':i+1,'Responsable':r.resp,'Ciclo':r.ciclo,'Cliente':r.cliente,'Empresa':r.empresa,'RUT':r.rut,'$ Neto pedido':r.neto,'N° O/C':r.oc,'$ O/C':r.ocm,'N° Factura':r.fac,'$ Neto factura':r.fn,'IVA 19%':r.fn!=null?ivaOf(r):'','Fecha de pago':fd(r.pago)==='—'?'':fd(r.pago),'Estado':r.estado,'Observaciones':r.obs}));
+  const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]||{A:1}).map(()=>({wch:16}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Control de Facturas');
+  XLSX.writeFile(wb,'Control_de_Facturas_'+todayISO()+'.xlsx');
+}
+function exportJson(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='respaldo_control_facturas_'+todayISO()+'.json';a.click()}
+function importJson(el){const f=el.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.recs||!d.lists)throw 0;if(confirm('Esto reemplazará los datos actuales. ¿Continuar?')){S=d;save();renderAll();toast('✅ Respaldo restaurado')}}catch(e){toast('Archivo no válido')}el.value=''};rd.readAsText(f)}
+
+/* ---------- general ---------- */
+function tab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t==t));$('v-reg').style.display=t=='reg'?'':'none';$('v-dash').style.display=t=='dash'?'':'none';cur=t;renderBody()}
+let cur='reg';
+function renderBody(keepFocus){renderQuick();cur=='reg'?renderTable():renderDash()}
+function renderAll(){renderPeriod();renderFilters();renderBody()}
+load();syncCiclos();renderAll();
+</script>
+</body>
+</html>
