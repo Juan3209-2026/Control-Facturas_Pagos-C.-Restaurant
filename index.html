@@ -119,8 +119,9 @@ tbody tr.arr:hover td{background:#fde047!important}
  #tbl td.act{justify-content:flex-end;gap:8px}.act button{padding:9px 16px;font-size:15px}
  #tbl td.act::before{display:none}
  .st{padding:6px 14px;font-size:13px}
- .modal{padding:0;align-items:stretch}
- .box,.box.sm{width:100%;min-height:100%;border-radius:0;padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
+ .modal{padding:0;align-items:flex-start;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+ .modal.on{display:block}
+ .box,.box.sm{width:100%;min-height:100vh;min-height:100dvh;height:auto;border-radius:0;padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
  .mh{position:sticky;top:0;background:#fff;z-index:2;padding:4px 0 8px}
  .mh h2{font-size:17px}
  .kpis{grid-template-columns:1fr 1fr;gap:9px}.kpi{padding:11px}.kpi .n{font-size:17px}
